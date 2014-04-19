@@ -6,7 +6,7 @@
  *
  * The simple form is intended to show the smart honeypot concepts only. In
  * light of that, it does not include important things such as sanitation and
- * validation. Please see hardened form for use in a production enviornment.
+ * validation. Please see hardened form for use in a production environment.
  *
  * @author Ryan Johnston
  * @copyright 2014 Ryan Johnston
@@ -96,7 +96,8 @@
 
     // Determine where we will put the honeypot
     $insertAt = rand()&count($form['fields']);
-    $stealLabel = rand()&count($form['fields']);
+    // Steal a label from one of the fields but not the honeypot
+    $stealLabel = rand()&(count($form['fields'])-1);
 
     // Process Form
     $emailSent = false;
@@ -148,11 +149,13 @@
         foreach($form['fields'] as $field){
             // Add the honeypot at it's random location
             if($c==$insertAt){
+                echo '<div>';
                 echo '<label for="' . strtolower($form['fields'][$stealLabel]['id']) . '">' .
                     $form['fields'][$stealLabel]['label'] . '</label>';
                 echo '<input type="text" name="' . $form['fields'][$stealLabel]['name'] .
                     '" id="' . strtolower($form['fields'][$stealLabel]['id']) . '" value="" placeholder="' .
                     $form['fields'][$stealLabel]['label'] . '" aria-required="true"/><br/>';
+                echo '</div>';
             }
 
             // Insert field with encoded name/id
@@ -164,8 +167,8 @@
             $c++;
         }
         echo '</form>';
-        // Add some raw javascript to remove the honeypot
-        // echo '<script type="text/JavaScript">tkvrmhp = document.getElementById("' . strtolower($form['fields'][$stealLabel]['id']) . '"); tkvrmhpp = tkvrmhp.parentNode; tkvrmhppp = tkvrmhpp.parentNode; tkvrmhppp.parentNode.removeChild(tkvrmhppp);</script>';
+        // Add some raw JavaScript to remove the honeypot
+        echo '<script type="text/JavaScript">tkvrmhp = document.getElementById("' . strtolower($form['fields'][$stealLabel]['id']) . '"); tkvrmhpp = tkvrmhp.parentNode; tkvrmhppp = tkvrmhpp.parentNode.removeChild(tkvrmhpp);</script>';
     } else {
         echo '<p>email sent</p>';
     }

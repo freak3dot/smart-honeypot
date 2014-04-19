@@ -64,6 +64,7 @@
             case 'file':
                 $html = '<input type="file" name="' . $newName .
                 '" id="' . $newName . '"/>';
+                break;
             case 'checkbox':
                 $html = '<input type="checkbox" name="' . $newName .
                 '" id="' . $newName . '"/>';
@@ -88,7 +89,7 @@
                 break;
             case 'submit':
                 $html = '<input type="submit" name="' . $newName .
-                '" id="' . $newName . '" value="' . $field['value'] . '" />';
+                '" id="' . $newName . '" value="' . trim($field['value']) . '" />';
                 break;
             case 'radio':
                 throw new Exception('Radio button not implemented.');
@@ -99,6 +100,104 @@
         }
         $html .= '<br/>';
         return $html;
+    }
+
+    /**
+     * Sanitize the field using PHP5 5.2.0 filters
+     * @author Ryan Johnston
+     * @param $field array Field Params
+     * @return string Field HTML
+     */
+    function sanitizeField($field, $key, $trim = true){
+        $key = makeField($field['name'], $key);
+
+        if($trim){
+            $_POST[$key] = trim($_POST[$key]);
+        }
+
+        if (version_compare(phpversion(), '5.2.0', '<')) {
+            // Fallback - PHP version isn't high enough
+            // skip sanitization
+            return $_POST[$key];
+        }
+
+        switch ($field['type']){
+            case 'email':
+                return filter_var($_POST[$key], FILTER_SANITIZE_EMAIL);
+                break;
+            case 'number':
+                return filter_var($_POST[$key], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+                break;
+            case 'url':
+                return filter_var($_POST[$key], FILTER_SANITIZE_URL);
+                break;
+            default:
+                return filter_var($_POST[$key], FILTER_SANITIZE_STRING);
+        }
+        // Code should never get here but here is default
+        return $_POST[$key];
+    }
+
+    /**
+     * Check the field type and determine if it is valid
+     * @author Ryan Johnston
+     * @param $field array Field Params
+     * @return string Field HTML
+     */
+    function isValidField($field, $sanitizedValue, $key){
+        // Set defaults
+        $valid = true;
+        $message = '';
+        $key = makeField($field['name'], $key);
+
+        // Check if field is required
+        if(isset($field['required']) && (!isset($sanitizedValue) || empty($sanitizedValue))){
+            $valid = false;
+            $message = 'Please enter ' . $field['label'] .'. This field is required.';
+        }
+        switch ($field['type']){
+            case 'email':
+                if (version_compare(phpversion(), '5.2.0', '<')) {
+                    // @TODO
+                } else {
+                    if(!filter_var($sanitizedValue, FILTER_VALIDATE_EMAIL)){
+                        $valid = false;
+                        $message = 'Please enter a valid email.';
+                    }
+                }
+                break;
+            case 'number':
+                if(!is_numeric($sanitizedValue)){
+                    $valid = false;
+                    $message = 'Please enter a valid number.';
+                }
+                break;
+            case 'url':
+                if (version_compare(phpversion(), '5.2.0', '<')) {
+                    // @TODO
+                } else {
+                    if(!filter_var($sanitizedValue, FILTER_VALIDATE_URL)){
+                        $valid = false;
+                        $message = 'Please enter a valid web address.';
+                    }
+                }
+                break;
+            case 'select':
+                if (is_array($field['options'])){
+                    $inOptionsArray = false;
+                    foreach($field['options'] as $value => $visible){
+                        if(isset($field['value']) && $sanitizedValue == $value){
+                            $inOptionsArray = true;
+                        }
+                    }
+                    if(!$inOptionsArray) {
+                        $valid = false;
+                        $message = 'Please select a valid option.';
+                    }
+                }
+                break;
+        }
+        return $message;
     }
 
 ?>

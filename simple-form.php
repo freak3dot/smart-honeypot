@@ -96,13 +96,12 @@
 
     // Determine where we will put the honeypot
     $insertAt = rand()&count($form['fields']);
-    // Steal a label from one of the fields but not the honeypot
+    // Steal a label from one of the fields but not the submit
     $stealLabel = rand()&(count($form['fields'])-1);
 
     // Process Form
     $emailSent = false;
     $honeyApprove = true;
-    // @todo send email with form
     if($_SERVER['REQUEST_METHOD'] === 'POST'){
         $encoded = base64_decode($_POST['enc-type']);
         $encoded = rtrim($encoded, '');

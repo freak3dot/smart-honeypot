@@ -96,13 +96,13 @@
 
     // Determine where we will put the honeypot
     $insertAt = rand()&count($form['fields']);
-    // Steal a label from one of the fields but not the honeypot
+    // Steal a label from one of the fields but not the submit
     $stealLabel = rand()&(count($form['fields'])-1);
 
     // Process Form
+    $hasError = false;
     $emailSent = false;
     $honeyApprove = true;
-    // @todo send email with form
     if($_SERVER['REQUEST_METHOD'] === 'POST'){
         $encoded = base64_decode($_POST['enc-type']);
         $encoded = rtrim($encoded, '');
@@ -117,8 +117,11 @@
             // Sanitation
             $$field['name'] = sanitizeField($field, $postAddOn);
             // Validation
-            ${'error' . $field['name']} = isValidField($field, $$field['name'],  $postAddOn);
-
+            $message = isValidField($field, $$field['name'],  $postAddOn);
+            if($message){
+                ${'error' . $field['name']} = $message;
+                $hasError = true;
+            }
          }
 
         // send email
@@ -176,7 +179,9 @@
             echo '<label for="' . $fieldName . '">' .
                 $field['label'] . '</label>';
             echo getFieldByType($field, $fieldName);
-
+            if(isset(${'error' . $field['name']})){
+                echo '<p class="error">' . ${'error' . $field['name']} . '</p>' . "\n";
+            }
             $c++;
         }
         echo '</form>';
